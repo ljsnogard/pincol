@@ -1,0 +1,22 @@
+[package]
+name = "pincol"
+version = "0.1.0"
+edition = "2021"
+
+authors = ["lino <lino_snsalias@outlook.com>"]
+description = "PINned COLlections: data structures utilizing `Pin` pointer"
+homepage = "https://github.com/ljsnogard/pincol"
+keywords = ["collection", "pin"]
+categories = ["algorithms"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+
+[dependencies]
+atomic_sync = { version = "0.1" }
+
+[dev-dependencies]
+pin-project = { version = "1.1.*" }
+format_no_std = "1"
+log = { version = "0.4.*" }
+env_logger = { version = "0.11.*" }
+tokio = { version = "1", features = ["full"] }
