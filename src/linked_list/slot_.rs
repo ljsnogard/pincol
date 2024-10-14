@@ -369,7 +369,7 @@ where
     }
 }
 
-impl<'a, T, O> Cursor<'a, T, O>
+impl<T, O> Cursor<'_, T, O>
 where
     T: ?Sized + Unpin,
     O: TrCmpxchOrderings,
@@ -400,16 +400,17 @@ where
     }
 }
 
-impl<'a, T, O> PartialEq for Cursor<'a, T, O>
+impl<T, O> PartialEq for Cursor<'_, T, O>
 where
     T: ?Sized,
     O: TrCmpxchOrderings,
 {
     fn eq(&self, other: &Self) -> bool {
-        let (a, b) = (&self.0, &other.0);
-        match (a, b) {
-            (Option::Some(a), Option::Some(b)) => ptr::eq(a.as_ptr(), b.as_ptr()),
-            (Option::None, Option::None) => true,
+        match (&self.0, &other.0) {
+            (Option::Some(a), Option::Some(b))
+                => ptr::eq(a.as_ptr(), b.as_ptr()),
+            (Option::None, Option::None)
+                => true,
             _ => false,
         }
     }

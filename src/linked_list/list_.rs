@@ -9,18 +9,20 @@
 use atomex::{AtomicFlags, CmpxchResult, StrictOrderings, TrCmpxchOrderings};
 use atomic_sync::{
     mutex::embedded::{MsbAsMutexSignal, SpinningMutexBorrowed},
-    x_deps::atomex,
+    x_deps::{abs_sync::sync_lock::TrSyncMutex, atomex},
 };
 
 use super::slot_::{PinnedSlot, Cursor};
 
-pub(super) type ListMutex<'a, T, O> =
-    SpinningMutexBorrowed<'a,
-        Pin<&'a mut PinnedList<T, O>>,
-        AtomicUsize,
-        MsbAsMutexSignal<usize>,
-        O,
-    >;
+pub type PinnedListMutex<'a, T, O> = SpinningMutexBorrowed<'a,
+    Pin<&'a mut PinnedList<T, O>>,
+    AtomicUsize,
+    MsbAsMutexSignal<usize>,
+    O,
+>;
+
+pub type PinnedListGuard<'a, 'g, T, O> =
+    <PinnedListMutex<'a, T, O> as TrSyncMutex>::MutexGuard<'g>;
 
 pub(super) type ListFlags<'a, O> = AtomicFlags<usize, &'a mut AtomicUsize, O>;
 
@@ -63,7 +65,7 @@ where
         Self::get_list_len_(u)
     }
 
-    pub fn mutex(&self) -> ListMutex<'_, T, O> {
+    pub fn mutex(&self) -> PinnedListMutex<'_, T, O> {
         unsafe {
             let this = self as *const Self as *mut Self;
             let cell = &mut (*this).flag_;
@@ -71,7 +73,7 @@ where
                 let mut p = NonNull::new_unchecked(this);
                 Pin::new_unchecked( p.as_mut())
             };
-            ListMutex::new(data, cell)
+            PinnedListMutex::new(data, cell)
         }
     }
 
