@@ -10,7 +10,7 @@ extern crate std;
 pub mod linked_list;
 
 pub mod x_deps {
+    pub use abs_sync::x_deps::pin_utils;
     pub use atomic_sync;
-    pub use atomic_sync::x_deps::atomex;
-    pub use atomic_sync::x_deps::abs_sync::x_deps::pin_utils;
+    pub use atomic_sync::x_deps::{abs_sync, atomex};
 }
