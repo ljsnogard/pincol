@@ -7,8 +7,10 @@
     task::Waker,
 };
 
+use pin_utils::pin_mut;
+
 use atomex::{AtomexPtrOwned, StrictOrderings, TrCmpxchOrderings};
-use atomic_sync::x_deps::atomex;
+use atomic_sync::x_deps::{atomex, pin_utils};
 
 use super::list_::PinnedList;
 
@@ -149,7 +151,9 @@ where
             return;
         };
         let mutex = q.mutex();
-        let mut g = mutex.acquire().wait();
+        let acq = mutex.acquire();
+        pin_mut!(acq);
+        let mut g = acq.lock().wait();
         let slot = unsafe { Pin::new_unchecked(self) };
         let r = (*g).as_mut().try_detach(slot);
         debug_assert!(r.is_ok(), "[PinnedSlot::drop]");

@@ -8,8 +8,8 @@
 
 use atomex::{AtomicFlags, CmpxchResult, StrictOrderings, TrCmpxchOrderings};
 use atomic_sync::{
-    mutex::embedded::{MsbAsMutexSignal, SpinningMutexBorrowed},
-    x_deps::{abs_sync::sync_lock::TrSyncMutex, atomex},
+    mutex::embedded::{MsbAsMutexSignal, MutexGuard, SpinningMutexBorrowed},
+    x_deps::atomex,
 };
 
 use super::slot_::{PinnedSlot, Cursor};
@@ -21,8 +21,14 @@ pub type PinnedListMutex<'a, T, O> = SpinningMutexBorrowed<'a,
     O,
 >;
 
-pub type PinnedListGuard<'a, 'g, T, O> =
-    <PinnedListMutex<'a, T, O> as TrSyncMutex>::MutexGuard<'g>;
+pub type PinnedListGuard<'a, 'g, T, O> = MutexGuard<
+    'a, 'g,
+    T,
+    usize,
+    &'a mut AtomicUsize,
+    MsbAsMutexSignal<usize>,
+    O,
+>;
 
 pub(super) type ListFlags<'a, O> = AtomicFlags<usize, &'a mut AtomicUsize, O>;
 
@@ -477,7 +483,9 @@ mod tests_ {
         let mut l = 0usize;
 
         let mut s1 = Box::pin(PinnedSlot::new(()));
-        let mut g = mutex.acquire().wait();
+        let acq = mutex.acquire();
+        pin_mut!(acq);
+        let mut g = acq.as_mut().lock().wait();
         let r = (*g).as_mut().push_tail(s1.as_mut());
         assert!(r.is_ok());
         assert!(s1.is_element_of(&q));
@@ -487,7 +495,7 @@ mod tests_ {
         drop(g);
 
         let mut s2 = Box::pin(PinnedSlot::new(()));
-        let mut g = mutex.acquire().wait();
+        let mut g = acq.as_mut().lock().wait();
         let r = (*g).as_mut().push_tail(s2.as_mut());
         assert!(r.is_ok());
         assert!(s2.is_element_of(&q));
@@ -497,7 +505,7 @@ mod tests_ {
         drop(g);
 
         let mut s3 = Box::pin(PinnedSlot::new(()));
-        let mut g = mutex.acquire().wait();
+        let mut g = acq.as_mut().lock().wait();
         let r = (*g).as_mut().push_tail(s3.as_mut());
         assert!(r.is_ok());
         assert!(s3.is_element_of(&q));
@@ -510,7 +518,7 @@ mod tests_ {
 
         let len = q.len();
         let mut i = 0usize;
-        let mut g = mutex.acquire().wait();
+        let mut g = acq.as_mut().lock().wait();
         let l = (*g).as_mut().clear(|_| { i += 1; true });
         assert_eq!(l, len);
         assert_eq!(i, len);
@@ -599,7 +607,9 @@ mod tests_ {
                 if opt.is_none() {
                     *opt = Option::Some(cx.waker().clone());
                     let mutex = queue.mutex();
-                    let mut queue_mut = mutex.acquire().wait();
+                    let acq = mutex.acquire();
+                    pin_mut!(acq);
+                    let mut queue_mut = acq.as_mut().lock().wait();
                     let r = queue_mut.as_mut().push_tail(this.slot_.as_mut());
                     debug_assert!(r.is_ok());
                     log::trace!(
@@ -632,7 +642,9 @@ mod tests_ {
             let x = rx.await;
             assert!(x.is_ok());
             let mutex = q.mutex();
-            let mut g = mutex.acquire().wait();
+            let acq = mutex.acquire();
+            pin_mut!(acq);
+            let mut g = acq.as_mut().lock().wait();
             (*g).as_mut().clear(iter)
         });
 
