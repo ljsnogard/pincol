@@ -8,13 +8,13 @@
 
 use atomex::{AtomicFlags, CmpxchResult, StrictOrderings, TrCmpxchOrderings};
 use atomic_sync::{
-    mutex::embedded::{MsbAsMutexSignal, MutexGuard, SpinningMutexBorrowed},
+    mutex::preemptive::{MsbAsMutexSignal, MutexGuard, SpinningMutexEmbedded},
     x_deps::atomex,
 };
 
 use super::slot_::{PinnedSlot, Cursor};
 
-pub type PinnedListMutex<'a, T, O> = SpinningMutexBorrowed<'a,
+pub type PinnedListMutex<'a, T, O> = SpinningMutexEmbedded<'a,
     Pin<&'a mut PinnedList<T, O>>,
     AtomicUsize,
     MsbAsMutexSignal<usize>,
