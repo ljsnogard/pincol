@@ -470,7 +470,6 @@ mod tests_ {
     };
     use pin_project::pin_project;
     use pin_utils::pin_mut;
-    use atomic_sync::x_deps::abs_sync::x_deps::pin_utils;
 
     use super::*;
 

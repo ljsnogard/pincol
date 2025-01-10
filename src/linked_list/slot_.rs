@@ -10,7 +10,7 @@
 use pin_utils::pin_mut;
 
 use atomex::{AtomexPtrOwned, StrictOrderings, TrCmpxchOrderings};
-use atomic_sync::x_deps::{atomex, pin_utils};
+use atomic_sync::x_deps::atomex;
 
 use super::list_::PinnedList;
 
