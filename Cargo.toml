@@ -1,7 +1,7 @@
 [package]
 name = "pincol"
-version = "0.1.2"
-edition = "2021"
+version = "0.2.0"
+edition = "2024"
 
 authors = ["lino <lino_snsalias@outlook.com>"]
 description = "PINned COLlections: data structures utilizing `Pin` pointer"
@@ -12,8 +12,7 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 
 [dependencies]
-atomic_sync = { git = "https://github.com/ljsnogard/atomic_sync.git", branch = "dev/0.1.2" }
-
+atomic_sync = { git = "https://github.com/ljsnogard/atomic_sync.git", branch = "dev/0.2.0" }
 pin-utils = { version = "*" }
 
 [dev-dependencies]
