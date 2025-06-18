@@ -1,6 +1,6 @@
 [package]
 name = "pincol"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 
 authors = ["lino <lino_snsalias@outlook.com>"]
@@ -12,8 +12,8 @@ license = "MIT/Apache-2.0"
 readme = "README.md"
 
 [dependencies]
-atomic_sync = { git = "https://github.com/ljsnogard/atomic_sync.git", branch = "dev/0.2.0" }
-pin-utils = { version = "*" }
+atomic_sync = { git = "https://github.com/ljsnogard/atomic_sync.git", branch = "dev/0.3.0" }
+pin-utils = { version = "0.1.0" }
 
 [dev-dependencies]
 pin-project = { version = "1.1.*" }

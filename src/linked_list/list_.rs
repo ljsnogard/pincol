@@ -98,11 +98,11 @@ where
         }
     }
 
-    pub fn tail_mut(self: Pin<&mut Self>) -> Cursor<T, O> {
+    pub fn tail_mut(self: Pin<&mut Self>) -> Cursor<'_, T, O> {
         Cursor::new(self.tail_)
     }
 
-    pub fn head_mut(self: Pin<&mut Self>) -> Cursor<T, O> {
+    pub fn head_mut(self: Pin<&mut Self>) -> Cursor<'_, T, O> {
         Cursor::new(self.head_)
     }
 
@@ -471,6 +471,8 @@ mod tests_ {
     use pin_project::pin_project;
     use pin_utils::pin_mut;
 
+    use abs_sync::preludes::*;
+    use atomic_sync::x_deps::abs_sync;
     use super::*;
 
     #[test]
@@ -482,9 +484,8 @@ mod tests_ {
         let mut l = 0usize;
 
         let mut s1 = Box::pin(PinnedSlot::new(()));
-        let acq = mutex.acquire();
-        pin_mut!(acq);
-        let mut g = acq.as_mut().lock().wait();
+        let mut acq = mutex.acquire();
+        let mut g = acq.lock().wait_or(|| unreachable!());
         let r = (*g).as_mut().push_tail(s1.as_mut());
         assert!(r.is_ok());
         assert!(s1.is_element_of(&q));
@@ -494,7 +495,7 @@ mod tests_ {
         drop(g);
 
         let mut s2 = Box::pin(PinnedSlot::new(()));
-        let mut g = acq.as_mut().lock().wait();
+        let mut g = acq.lock().wait_or(|| unreachable!());
         let r = (*g).as_mut().push_tail(s2.as_mut());
         assert!(r.is_ok());
         assert!(s2.is_element_of(&q));
@@ -504,7 +505,7 @@ mod tests_ {
         drop(g);
 
         let mut s3 = Box::pin(PinnedSlot::new(()));
-        let mut g = acq.as_mut().lock().wait();
+        let mut g = acq.lock().wait_or(|| unreachable!());
         let r = (*g).as_mut().push_tail(s3.as_mut());
         assert!(r.is_ok());
         assert!(s3.is_element_of(&q));
@@ -517,7 +518,7 @@ mod tests_ {
 
         let len = q.len();
         let mut i = 0usize;
-        let mut g = acq.as_mut().lock().wait();
+        let mut g = acq.lock().wait_or(|| unreachable!());
         let l = (*g).as_mut().clear(|_| { i += 1; true });
         assert_eq!(l, len);
         assert_eq!(i, len);
@@ -606,9 +607,8 @@ mod tests_ {
                 if opt.is_none() {
                     *opt = Option::Some(cx.waker().clone());
                     let mutex = queue.mutex();
-                    let acq = mutex.acquire();
-                    pin_mut!(acq);
-                    let mut queue_mut = acq.as_mut().lock().wait();
+                    let mut acq = mutex.acquire();
+                    let mut queue_mut = acq.lock().wait_or(|| unreachable!());
                     let r = queue_mut.as_mut().push_tail(this.slot_.as_mut());
                     debug_assert!(r.is_ok());
                     log::trace!(
@@ -641,9 +641,8 @@ mod tests_ {
             let x = rx.await;
             assert!(x.is_ok());
             let mutex = q.mutex();
-            let acq = mutex.acquire();
-            pin_mut!(acq);
-            let mut g = acq.as_mut().lock().wait();
+            let mut acq = mutex.acquire();
+            let mut g = acq.lock().wait_or(|| unreachable!());
             (*g).as_mut().clear(iter)
         });
 

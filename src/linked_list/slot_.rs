@@ -7,10 +7,9 @@
     task::Waker,
 };
 
-use pin_utils::pin_mut;
-
+use abs_sync::may_break::TrMayBreak;
 use atomex::{AtomexPtrOwned, StrictOrderings, TrCmpxchOrderings};
-use atomic_sync::x_deps::atomex;
+use atomic_sync::x_deps::{abs_sync, atomex};
 
 use super::list_::PinnedList;
 
@@ -151,9 +150,8 @@ where
             return;
         };
         let mutex = q.mutex();
-        let acq = mutex.acquire();
-        pin_mut!(acq);
-        let mut g = acq.lock().wait();
+        let mut acq = mutex.acquire();
+        let mut g = acq.lock().wait_or(|| unreachable!());
         let slot = unsafe { Pin::new_unchecked(self) };
         let r = (*g).as_mut().try_detach(slot);
         debug_assert!(r.is_ok(), "[PinnedSlot::drop]");
@@ -235,23 +233,20 @@ where
 
     #[inline(always)]
     pub fn into_pinned_slot(mut self) -> Option<Pin<&'a mut PinnedSlot<T, O>>> {
-        self.0
-            .take()
-            .map(|mut p| unsafe { Pin::new_unchecked(p.as_mut()) })
+        let mut p = self.0.take()?;
+        Option::Some( unsafe { Pin::new_unchecked(p.as_mut()) })
     }
 
     #[inline(always)]
     pub fn pinned_slot(&self) -> Option<Pin<&PinnedSlot<T, O>>> {
-        self.0
-            .map(|p| unsafe { Pin::new_unchecked(p.as_ref()) })
-        
+        let p = self.0?;
+        Option::Some(unsafe { Pin::new_unchecked(p.as_ref()) })
     }
 
     #[inline(always)]
     pub fn pinned_slot_mut(&mut self) -> Option<Pin<&mut PinnedSlot<T, O>>> {
-        self.0
-            .map(|mut p| unsafe { Pin::new_unchecked(p.as_mut()) })
-        
+        let mut p = self.0?;
+        Option::Some(unsafe { Pin::new_unchecked(p.as_mut()) })
     }
 
     #[inline(always)]
@@ -266,7 +261,6 @@ where
         self.0
             .map(|p| unsafe { p.as_ref().is_element_of(list) })
             .unwrap_or(false)
-        
     }
 
     pub fn move_prev(&mut self) -> bool {
